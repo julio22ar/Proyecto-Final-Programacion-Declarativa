@@ -1,8 +1,8 @@
 # Proyecto Integrales – Programación Declarativa 02/2026
 
-**Cómo probar lo que está listo (integrantes 1 y 2):** `cd prolog` → `swipl` → `?- ['integrante1.pl', 'integrante2.pl'].` → `?- probar_integrante1.` y `?- probar_integrante2.`
+**Cómo probar lo que está listo (integrantes 1, 2 y 3):** `cd prolog` → `swipl` → `?- ['integrante1.pl', 'integrante2.pl', 'integrante3.pl'].` → `?- probar_integrante1.`, `?- probar_integrante2.` y `?- probar_integrante3.`
 
-**Cuando estén los cuatro módulos:** `cd prolog` → `swipl main.pl`. El archivo `main.pl` actual intenta cargar `integrante3.pl` e `integrante4.pl`, por lo que todavía no debe utilizarse como arranque completo mientras esos archivos no existan.
+**Arranque completo:** `cd prolog` → `swipl main.pl`. Ya carga sin errores; `integrante4.pl` todavía está vacío.
 
 ## Lo que ya está listo (Integrante 1)
 
@@ -67,12 +67,39 @@ La simplificación incluye casos como `x^1 → x`, `A/1 → A`, `0+U → U`, `1*
    - Se acepta `x^-1` y `x**2` (se convierten a `x^ -1` y `x^2`).
 5. Las reglas de todos los integrantes deben poder invocarse a través de `s/3`, sin duplicar funciones ya implementadas. El integrante 3 puede reutilizar `integrar/3` para recibir la primitiva y su estado.
 
-## Para el Integrante 3 (siguiente paso)
+## Lo que ya está listo (Integrante 3)
 
-- Reglas `s/3` de: `x`, `u-v` y `a^x` (respetando las condiciones matemáticas de la base `a` y evitando duplicar reglas de los integrantes 1 y 2).
-- Evaluación de la primitiva entre dos límites `a` y `b` para calcular la integral definida mediante `F(b) - F(a)`.
-- Reutilizar `integrar/3` del integrante 2 para obtener la primitiva y detectar errores antes de evaluar los límites.
-- Crear el predicado de evaluación numérica con una entrada y salida documentadas, listo para ser llamado por la futura interfaz; contemplar límites inválidos, expresiones que no puedan evaluarse y discontinuidades en el intervalo.
-- Incorporar sus propias pruebas de integración y de evaluación, incluidos intervalos con resultados positivos, negativos y cero.
+| Qué | Predicado | Archivo |
+|---|---|---|
+| ∫ x dx | `s(x, x, x^2/2)` | `integrante3.pl` |
+| ∫ (u − v) dx | `s(x, U-V, RU-RV)` (recursiva) | `integrante3.pl` |
+| ∫ aˣ dx | `s(x, A^x, A^x/log(A))` con a > 0, a ≠ 1; `e^x → e^x`; `1^x → x`; a ≤ 0 no tiene regla | `integrante3.pl` |
+| Integral definida F(b) − F(a) | `integral_definida(+Texto, +A, +B, -Primitiva, -Valor, -Estado)` | `integrante3.pl` |
+| Área geométrica total | `area_bajo_curva(+Texto, +A, +B, -Area, -Estado)` | `integrante3.pl` |
+| Validar límites | `validar_intervalo(+A, +B, -Va, -Vb, -Estado)` | `integrante3.pl` |
+| Evaluar una expresión en un punto | `evaluar_en(+Expr, +X, -Valor)` | `integrante3.pl` |
+| Demostración paso a paso | `demo_integral(+Texto, +A, +B)` | `integrante3.pl` |
 
-**Nota matemática:** `F(b)-F(a)` calcula la integral definida con signo. Si se solicita el área geométrica total bajo la curva, puede ser necesario dividir el intervalo en tramos y sumar áreas absolutas; esto debe acordarse con el equipo y el docente.
+Los límites pueden ser números o texto (`0`, `'pi'`, `'pi/2'`, `'-1.5'`). Se exige a ≤ b; si a = b el resultado es 0. Si hay error, `Valor`/`Area` = `sin_resultado` y `Estado = error('mensaje')`.
+
+Antes de aplicar F(b) − F(a) se revisa que f sea continua en [a, b]: se evalúa f en 2000 puntos y se buscan cambios de signo en denominadores, bases con exponente negativo y cos(u) dentro de tan(u) (asíntotas verticales). `integral_definida` devuelve la integral **con signo**; `area_bajo_curva` divide el intervalo en las raíces de f y suma valores absolutos.
+
+**Pruebas:** `?- probar_integrante3.` (33 casos: reglas, resultados positivos, negativos y cero, límites inválidos, discontinuidades y áreas).
+
+**Ejemplos de uso:**
+
+```prolog
+?- integral_definida('x^2 - 1', 0, 2, F, V, E).
+% F = x^3/3-x, V = 0.666..., E = ok.
+
+?- area_bajo_curva('x^2 - 1', 0, 2, A, E).
+% A = 2.0, E = ok.
+
+?- integral_definida('tan(x)', 0, 2, F, V, E).
+% V = sin_resultado, E = error('Discontinuidad en el intervalo cerca de x = 1.5708 ...').
+```
+
+## Para el Integrante 4 (siguiente paso)
+
+- Reglas `s/3` de: `k*x`, `cos(x)` y `sh(x)` (para `sh` usar `sinh` al evaluar; `evaluar_en/3` ya lo traduce).
+- La interfaz solo necesita llamar a `integrar/3`, `integral_definida/6` y `area_bajo_curva/5`, y mostrar el mensaje de `Estado` tal cual.
